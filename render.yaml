@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ultra-doc-intelligence
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: ./start.sh
+    envVars:
+      - key: LLAMA_CLOUD_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PORT
+        value: 10000

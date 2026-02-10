@@ -1,0 +1,29 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Data
+data/chroma_db/
+data/uploads/*.pdf
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Notebooks (optional - remove this line if you want to push notebooks)
+notebooks/
+
+# Tests (optional - remove this line if you want to push tests)
+tests/
