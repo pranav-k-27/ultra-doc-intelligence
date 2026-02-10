@@ -2,8 +2,9 @@ services:
   - type: web
     name: ultra-doc-intelligence
     env: python
+    runtime: python-3.11  # ADD THIS LINE - forces Python 3.11
     buildCommand: pip install -r requirements.txt
-    startCommand: ./start.sh
+    startCommand: bash start.sh
     envVars:
       - key: LLAMA_CLOUD_API_KEY
         sync: false
