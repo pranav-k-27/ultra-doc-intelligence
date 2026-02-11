@@ -1,31 +1,30 @@
 #!/bin/bash
 
-# Start API in background with output
-echo "Starting FastAPI backend..."
-python app.py > api.log 2>&1 &
+# Start API in background
+echo "Starting FastAPI backend on port $PORT..."
+python app.py &
 API_PID=$!
 
-# Wait and check if API is alive
-sleep 10
+# Wait for API to start
+echo "Waiting for API to be ready..."
+sleep 15
 
-# Check if API process is still running
+# Check if API is running
 if ! kill -0 $API_PID 2>/dev/null; then
-    echo "ERROR: API failed to start!"
-    cat api.log
+    echo "❌ API failed to start!"
     exit 1
 fi
 
-# Wait for API to respond
-echo "Waiting for API to be ready..."
-for i in {1..30}; do
-    if curl -f http://localhost:8000/ > /dev/null 2>&1; then
-        echo "API is ready!"
+# Try to ping API
+for i in {1..10}; do
+    if curl -f http://localhost:$PORT/ > /dev/null 2>&1; then
+        echo "✅ API is ready!"
         break
     fi
-    echo "Attempt $i/30: API not ready yet..."
+    echo "Waiting for API... ($i/10)"
     sleep 2
 done
 
-# Start Streamlit
+# Start Streamlit UI (also on same port - Render only exposes one port)
 echo "Starting Streamlit UI..."
 streamlit run ui.py --server.port=$PORT --server.address=0.0.0.0

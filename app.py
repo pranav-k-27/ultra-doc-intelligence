@@ -143,6 +143,18 @@ async def extract_data(reference_id: str = Form(...)):
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    
     print("🚀 Starting Ultra Doc Intelligence API...")
     print("📄 API Documentation: http://localhost:8000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    # Get port from environment (Render uses $PORT)
+    port = int(os.getenv("PORT", 8000))
+    
+    # Run without loop='auto' to avoid nest_asyncio conflicts
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=port,
+        loop="asyncio"  # Use standard asyncio, not uvloop
+    )
