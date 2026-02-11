@@ -6,9 +6,17 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 import shutil
+
+# SET WORKING DIRECTORY FIRST
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+print(f"📂 Working directory: {os.getcwd()}")
+
+# CREATE DATA DIRECTORIES
+os.makedirs("data/uploads", exist_ok=True)
+os.makedirs("data/chroma_db", exist_ok=True)
+print("✅ Data directories created")
 
 from src.document_processor import DocumentProcessor
 from src.vector_store import VectorStore
@@ -17,19 +25,6 @@ from src.extractor import StructuredExtractor
 
 # Load environment variables
 load_dotenv()
-
-# CREATE DATA DIRECTORIES - Use absolute paths
-BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data"
-UPLOAD_DIR = DATA_DIR / "uploads"
-CHROMA_DIR = DATA_DIR / "chroma_db"
-
-# Create directories
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-CHROMA_DIR.mkdir(parents=True, exist_ok=True)
-print(f"✅ Created directories:")
-print(f"   - Upload: {UPLOAD_DIR}")
-print(f"   - ChromaDB: {CHROMA_DIR}")
 
 # Initialize FastAPI
 app = FastAPI(
@@ -48,7 +43,7 @@ app.add_middleware(
 
 # Initialize components
 processor = DocumentProcessor(api_key=os.getenv("LLAMA_CLOUD_API_KEY"))
-vector_store = VectorStore(persist_directory=str(CHROMA_DIR))
+vector_store = VectorStore()
 rag_engine = RAGEngine(
     api_key=os.getenv("OPENAI_API_KEY"),
     vector_store=vector_store
@@ -71,22 +66,27 @@ def root():
 async def upload_document(file: UploadFile = File(...)):
     """Upload and process PDF document"""
     try:
+        print(f"\n📤 Received upload request: {file.filename}")
+        
         # Validate file type
         if not file.filename.endswith('.pdf'):
             raise HTTPException(status_code=400, detail="Only PDF files are supported")
         
-        # Save file with absolute path
-        file_path = UPLOAD_DIR / file.filename
-        print(f"📁 Saving file to: {file_path}")
+        # Save file
+        file_path = f"./data/uploads/{file.filename}"
+        print(f"💾 Saving to: {file_path}")
+        print(f"📂 Current directory: {os.getcwd()}")
+        print(f"📁 Upload dir exists: {os.path.exists('./data/uploads')}")
         
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        print(f"✅ File saved: {file_path.exists()}")
+        print(f"✅ File saved: {os.path.exists(file_path)}")
+        print(f"📏 File size: {os.path.getsize(file_path)} bytes")
         
         # Process document
-        print(f"🔄 Processing document...")
-        chunks = processor.process_pdf(str(file_path))
+        print(f"🔄 Processing with LlamaParse...")
+        chunks = processor.process_pdf(file_path)
         print(f"✅ Created {len(chunks)} chunks")
         
         # Store in vector database
@@ -95,6 +95,8 @@ async def upload_document(file: UploadFile = File(...)):
         # Extract metadata
         reference_id = chunks[0]['metadata'].get('reference_id') if chunks else None
         doc_type = chunks[0]['metadata'].get('doc_type') if chunks else None
+        
+        print(f"✅ Upload complete: {num_chunks} chunks, ref_id: {reference_id}")
         
         return {
             "status": "success",
@@ -105,10 +107,13 @@ async def upload_document(file: UploadFile = File(...)):
         }
     
     except Exception as e:
-        print(f"❌ Error in upload: {str(e)}")
+        print(f"\n❌ ERROR in upload:")
+        print(f"   Error type: {type(e).__name__}")
+        print(f"   Error message: {str(e)}")
         import traceback
+        print("   Full traceback:")
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @app.post("/ask")
 async def ask_question(
@@ -124,7 +129,6 @@ async def ask_question(
         return result
     
     except Exception as e:
-        print(f"❌ Error in ask: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error answering question: {str(e)}")
 
 @app.post("/extract")
@@ -152,7 +156,6 @@ async def extract_data(reference_id: str = Form(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error in extract: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error extracting data: {str(e)}")
 
 if __name__ == "__main__":
@@ -166,4 +169,4 @@ if __name__ == "__main__":
         host="127.0.0.1",
         port=8000,
         loop="asyncio"
-    )
+    ) 
