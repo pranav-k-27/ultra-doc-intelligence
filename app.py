@@ -146,15 +146,11 @@ if __name__ == "__main__":
     import os
     
     print("🚀 Starting Ultra Doc Intelligence API...")
-    print("📄 API Documentation: http://localhost:8000/docs")
     
-    # Get port from environment (Render uses $PORT)
-    port = int(os.getenv("PORT", 8000))
-    
-    # Run without loop='auto' to avoid nest_asyncio conflicts
+    # Always use port 8000 for API (internal)
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=port,
-        loop="asyncio"  # Use standard asyncio, not uvloop
+        port=8000,
+        loop="asyncio"
     )
