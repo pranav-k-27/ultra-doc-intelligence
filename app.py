@@ -143,14 +143,14 @@ async def extract_data(reference_id: str = Form(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    import os
     
     print("🚀 Starting Ultra Doc Intelligence API...")
+    print("📄 API Documentation: http://localhost:8000/docs")
     
-    # Always use port 8000 for API (internal)
+    # ALWAYS use port 8000 (internal only, not exposed)
     uvicorn.run(
         app, 
-        host="0.0.0.0", 
-        port=8000,
+        host="127.0.0.1",  # Listen on localhost only (internal)
+        port=8000,         # Fixed port, not $PORT
         loop="asyncio"
     )
