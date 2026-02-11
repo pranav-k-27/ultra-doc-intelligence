@@ -17,6 +17,11 @@ from src.extractor import StructuredExtractor
 # Load environment variables
 load_dotenv()
 
+# CREATE DATA DIRECTORIES (ADD THIS SECTION)
+os.makedirs("./data/uploads", exist_ok=True)
+os.makedirs("./data/chroma_db", exist_ok=True)
+print("✅ Data directories created")
+
 # Initialize FastAPI
 app = FastAPI(
     title="Ultra Doc Intelligence",
@@ -45,6 +50,7 @@ extractor = StructuredExtractor(api_key=os.getenv("OPENAI_API_KEY"))
 print("✅ All components initialized successfully")
 
 @app.get("/")
+@app.head("/")  
 def root():
     """Health check endpoint"""
     return {
